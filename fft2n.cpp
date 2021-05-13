@@ -5,7 +5,7 @@
     This source is freeware.
 */
 #include "fft2n.hpp"
-#include <cmath>
+
 
 
 
@@ -116,7 +116,7 @@ static Complex *createWstore(unsigned int L, bool complement)
     return Wstore;
 }
 
-bool fft_step(Complex *x, unsigned int T, unsigned int M, const Complex *Wstore)
+static bool fft_step(Complex *x, unsigned int T, unsigned int M, const Complex *Wstore)
 {
     unsigned int L, I, J, MI, MJ, ML, N, Nd2, k, m, Skew, mpNd2;
     unsigned char *Ic = (unsigned char*) &I;
