@@ -2,6 +2,7 @@
 #define COMPLEX_HPP_
 
 #include <cmath>
+#include "DSP.h"
 
 struct Complex
 {
@@ -13,6 +14,12 @@ public:
     float GetAbs(void);
     static float ArgDiff(Complex& in1, Complex& in2);
     static void ConvertFromFloat(float* in, Complex* out, uint32_t len);
+
+    static inline void Mul(Complex* z, const Complex* z1, const Complex* z2)
+    {
+        z->Re = (z1->Re * z2->Re - z1->Im * z2->Im);
+        z->Im = (z1->Re * z2->Im + z1->Im * z2->Re);
+    }
 
     //This is minimized version of type 'complex'. All operations is inline
     inline void operator= (const Complex& y) { Re = y.Re; Im = y.Im; }
