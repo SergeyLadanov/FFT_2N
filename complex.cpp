@@ -34,3 +34,12 @@ float Complex::ArgDiff(Complex& in1, Complex& in2)
 
 	return result;
 }
+
+void Complex::ConvertFromFloat(float* in, Complex* out, uint32_t len)
+{
+    for (uint32_t i = 0; i < len; i++)
+    {
+        out[i].Re = in[i];
+        out[i].Im = 0.0f;
+    }
+}
