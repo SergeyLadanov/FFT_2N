@@ -87,7 +87,7 @@ static Complex W2n[32]={
 #define M_2PI (6.283185307179586476925286766559f)
 
 
-Complex *FFT2N::CreateWstore(unsigned int L, bool complement)
+static Complex *createWstore(unsigned int L, bool complement)
 {
     unsigned int N, Skew, Skew2;
     Complex *Wstore, *Warray, *WstoreEnd;
@@ -111,7 +111,7 @@ Complex *FFT2N::CreateWstore(unsigned int L, bool complement)
     return Wstore;
 }
 
-bool FFT2N::Step(Complex *x, unsigned int T, unsigned int M, const Complex *Wstore)
+static bool fft_step(Complex *x, unsigned int T, unsigned int M, const Complex *Wstore)
 {
     unsigned int L, I, J, MI, MJ, ML, N, Nd2, k, m, Skew, mpNd2;
     unsigned char *Ic = (unsigned char*) &I;
@@ -165,7 +165,7 @@ bool FFT2N::Step(Complex *x, unsigned int T, unsigned int M, const Complex *Wsto
   N: N - number of items in array. Must be odd
   complement: false - normal (direct) transformation, true - reverse transformation
 */
-void FFT2N::Transform(Complex *x, int N, bool complement)
+void fft_2n(Complex *x, int N, bool complement)
 {
     int r, sL, m, rpsL, mprM, widx, step, step2, h, L, T, M;
 
@@ -192,11 +192,11 @@ void FFT2N::Transform(Complex *x, int N, bool complement)
     M = N / L;
 
     //find rotation multipliers
-    Complex *Wstore= CreateWstore(L, complement);
+    Complex *Wstore= createWstore(L, complement);
     
     //make usual FFT
     for (h = 0; h < M; h++) 
-        Step(x + h, T, M, Wstore);
+        fft_step(x + h, T, M, Wstore);
 
     //remove multipliers
     delete [] Wstore;

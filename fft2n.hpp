@@ -16,15 +16,7 @@
   N: N - number of items in array. Must be odd
   complement: false - normal (direct) transformation, true - reverse transformation
 */
+void fft_2n(Complex* x, int N, bool complement);
 
-
-class FFT2N
-{
-public:
-    static void Transform(Complex* x, int N, bool complement);
-private:
-    static Complex* CreateWstore(unsigned int L, bool complement);
-    static bool Step(Complex* x, unsigned int T, unsigned int M, const Complex* Wstore);
-};
 
 #endif
