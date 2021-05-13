@@ -12,6 +12,7 @@ public:
     float GetArg(void);
     float GetAbs(void);
     static float ArgDiff(Complex& in1, Complex& in2);
+    static void ConvertFromFloat(float* in, Complex* out, uint32_t len);
 
     //This is minimized version of type 'complex'. All operations is inline
     inline void operator= (const Complex& y) { Re = y.Re; Im = y.Im; }
