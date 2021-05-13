@@ -4,8 +4,10 @@
     Coded by Miroslav Voinarovsky, 2004
     This source is freeware.
 */
-#include "fft.h"
-#include <math.h>
+#include "fft2n.hpp"
+#include <cmath>
+
+
 
 // This array contains values from 0 to 255 with reverse bit order
 static unsigned char reverse256[]= {
@@ -43,90 +45,84 @@ static unsigned char reverse256[]= {
     0x1F, 0x9F, 0x5F, 0xDF, 0x3F, 0xBF, 0x7F, 0xFF,
 };
 
-//This is minimized version of type 'complex'. All operations is inline
-static long double temp;
-inline void operator+=(ShortComplex &x, const Complex &y)        { x.re += (double)y.re; x.im += (double)y.im; }
-inline void operator-=(ShortComplex &x, const Complex &y)        { x.re -= (double)y.re; x.im -= (double)y.im; }
-inline void operator*=(Complex &x,        const Complex &y)        { temp = x.re; x.re = temp * y.re - x.im * y.im; x.im = temp * y.im + x.im * y.re; }
-inline void operator*=(Complex &x,        const ShortComplex &y)    { temp = x.re; x.re = temp * y.re - x.im * y.im; x.im = temp * y.im + x.im * y.re; }
-inline void operator/=(ShortComplex &x, double div)                { x.re /= div; x.im /= div; }
+
 
 //This is array exp(-2*pi*j/2^n) for n= 1,...,32
 //exp(-2*pi*j/2^n) = Complex( cos(2*pi/2^n), -sin(2*pi/2^n) )
 static Complex W2n[32]={
-    {-1.00000000000000000000000000000000,  0.00000000000000000000000000000000}, // W2 calculator (copy/paste) : po, ps
-    { 0.00000000000000000000000000000000, -1.00000000000000000000000000000000}, // W4: p/2=o, p/2=s
-    { 0.70710678118654752440084436210485, -0.70710678118654752440084436210485}, // W8: p/4=o, p/4=s
-    { 0.92387953251128675612818318939679, -0.38268343236508977172845998403040}, // p/8=o, p/8=s
-    { 0.98078528040323044912618223613424, -0.19509032201612826784828486847702}, // p/16=
-    { 0.99518472667219688624483695310948, -9.80171403295606019941955638886e-2}, // p/32=
-    { 0.99879545620517239271477160475910, -4.90676743274180142549549769426e-2}, // p/64=
-    { 0.99969881869620422011576564966617, -2.45412285229122880317345294592e-2}, // p/128=
-    { 0.99992470183914454092164649119638, -1.22715382857199260794082619510e-2}, // p/256=
-    { 0.99998117528260114265699043772857, -6.13588464915447535964023459037e-3}, // p/(2y9)=
-    { 0.99999529380957617151158012570012, -3.06795676296597627014536549091e-3}, // p/(2y10)=
-    { 0.99999882345170190992902571017153, -1.53398018628476561230369715026e-3}, // p/(2y11)=
-    { 0.99999970586288221916022821773877, -7.66990318742704526938568357948e-4}, // p/(2y12)=
-    { 0.99999992646571785114473148070739, -3.83495187571395589072461681181e-4}, // p/(2y13)=
-    { 0.99999998161642929380834691540291, -1.91747597310703307439909561989e-4}, // p/(2y14)=
-    { 0.99999999540410731289097193313961, -9.58737990959773458705172109764e-5}, // p/(2y15)=
-    { 0.99999999885102682756267330779455, -4.79368996030668845490039904946e-5}, // p/(2y16)=
-    { 0.99999999971275670684941397221864, -2.39684498084182187291865771650e-5}, // p/(2y17)=
-    { 0.99999999992818917670977509588385, -1.19842249050697064215215615969e-5}, // p/(2y18)=
-    { 0.99999999998204729417728262414778, -5.99211245264242784287971180889e-6}, // p/(2y19)=
-    { 0.99999999999551182354431058417300, -2.99605622633466075045481280835e-6}, // p/(2y20)=
-    { 0.99999999999887795588607701655175, -1.49802811316901122885427884615e-6}, // p/(2y21)=
-    { 0.99999999999971948897151921479472, -7.49014056584715721130498566730e-7}, // p/(2y22)=
-    { 0.99999999999992987224287980123973, -3.74507028292384123903169179084e-7}, // p/(2y23)=
-    { 0.99999999999998246806071995015625, -1.87253514146195344868824576593e-7}, // p/(2y24)=
-    { 0.99999999999999561701517998752946, -9.36267570730980827990672866808e-8}, // p/(2y25)=
-    { 0.99999999999999890425379499688176, -4.68133785365490926951155181385e-8}, // p/(2y26)=
-    { 0.99999999999999972606344874922040, -2.34066892682745527595054934190e-8}, // p/(2y27)=
-    { 0.99999999999999993151586218730510, -1.17033446341372771812462135032e-8}, // p/(2y28)=
-    { 0.99999999999999998287896554682627, -5.85167231706863869080979010083e-9}, // p/(2y29)=
-    { 0.99999999999999999571974138670657, -2.92583615853431935792823046906e-9}, // p/(2y30)=
-    { 0.99999999999999999892993534667664, -1.46291807926715968052953216186e-9}, // p/(2y31)=
+    {-1.00000000000000000000000000000000f,  0.00000000000000000000000000000000f}, // W2 calculator (copy/paste) : po, ps
+    { 0.00000000000000000000000000000000f, -1.00000000000000000000000000000000f}, // W4: p/2=o, p/2=s
+    { 0.70710678118654752440084436210485f, -0.70710678118654752440084436210485f}, // W8: p/4=o, p/4=s
+    { 0.92387953251128675612818318939679f, -0.38268343236508977172845998403040f}, // p/8=o, p/8=s
+    { 0.98078528040323044912618223613424f, -0.19509032201612826784828486847702f}, // p/16=
+    { 0.99518472667219688624483695310948f, -9.80171403295606019941955638886e-2f}, // p/32=
+    { 0.99879545620517239271477160475910f, -4.90676743274180142549549769426e-2f}, // p/64=
+    { 0.99969881869620422011576564966617f, -2.45412285229122880317345294592e-2f}, // p/128=
+    { 0.99992470183914454092164649119638f, -1.22715382857199260794082619510e-2f}, // p/256=
+    { 0.99998117528260114265699043772857f, -6.13588464915447535964023459037e-3f}, // p/(2y9)=
+    { 0.99999529380957617151158012570012f, -3.06795676296597627014536549091e-3f}, // p/(2y10)=
+    { 0.99999882345170190992902571017153f, -1.53398018628476561230369715026e-3f}, // p/(2y11)=
+    { 0.99999970586288221916022821773877f, -7.66990318742704526938568357948e-4f}, // p/(2y12)=
+    { 0.99999992646571785114473148070739f, -3.83495187571395589072461681181e-4f}, // p/(2y13)=
+    { 0.99999998161642929380834691540291f, -1.91747597310703307439909561989e-4f}, // p/(2y14)=
+    { 0.99999999540410731289097193313961f, -9.58737990959773458705172109764e-5f}, // p/(2y15)=
+    { 0.99999999885102682756267330779455f, -4.79368996030668845490039904946e-5f}, // p/(2y16)=
+    { 0.99999999971275670684941397221864f, -2.39684498084182187291865771650e-5f}, // p/(2y17)=
+    { 0.99999999992818917670977509588385f, -1.19842249050697064215215615969e-5f}, // p/(2y18)=
+    { 0.99999999998204729417728262414778f, -5.99211245264242784287971180889e-6f}, // p/(2y19)=
+    { 0.99999999999551182354431058417300f, -2.99605622633466075045481280835e-6f}, // p/(2y20)=
+    { 0.99999999999887795588607701655175f, -1.49802811316901122885427884615e-6f}, // p/(2y21)=
+    { 0.99999999999971948897151921479472f, -7.49014056584715721130498566730e-7f}, // p/(2y22)=
+    { 0.99999999999992987224287980123973f, -3.74507028292384123903169179084e-7f}, // p/(2y23)=
+    { 0.99999999999998246806071995015625f, -1.87253514146195344868824576593e-7f}, // p/(2y24)=
+    { 0.99999999999999561701517998752946f, -9.36267570730980827990672866808e-8f}, // p/(2y25)=
+    { 0.99999999999999890425379499688176f, -4.68133785365490926951155181385e-8f}, // p/(2y26)=
+    { 0.99999999999999972606344874922040f, -2.34066892682745527595054934190e-8f}, // p/(2y27)=
+    { 0.99999999999999993151586218730510f, -1.17033446341372771812462135032e-8f}, // p/(2y28)=
+    { 0.99999999999999998287896554682627f, -5.85167231706863869080979010083e-9f}, // p/(2y29)=
+    { 0.99999999999999999571974138670657f, -2.92583615853431935792823046906e-9f}, // p/(2y30)=
+    { 0.99999999999999999892993534667664f, -1.46291807926715968052953216186e-9f}, // p/(2y31)=
 };
 
-#define M_2PI (6.283185307179586476925286766559)
+#define M_2PI (6.283185307179586476925286766559f)
 
-inline void complex_mul(ShortComplex *z, const ShortComplex *z1, const Complex *z2)
+inline void complex_mul(Complex *z, const Complex *z1, const Complex *z2)
 {
-    z->re = (double)(z1->re * z2->re - z1->im * z2->im);
-    z->im = (double)(z1->re * z2->im + z1->im * z2->re);
+    z->Re = (z1->Re * z2->Re - z1->Im * z2->Im);
+    z->Im = (z1->Re * z2->Im + z1->Im * z2->Re);
 }
 
-static ShortComplex *createWstore(unsigned int L, bool complement)
+static Complex *createWstore(unsigned int L, bool complement)
 {
     unsigned int N, Skew, Skew2;
-    ShortComplex *Wstore, *Warray, *WstoreEnd;
+    Complex *Wstore, *Warray, *WstoreEnd;
     Complex WN, *pWN;
 
     Skew2 = L >> 1;
-    Wstore = new ShortComplex[Skew2];
+    Wstore = new Complex [Skew2];
     WstoreEnd = Wstore + Skew2;
-    Wstore[0].re = 1.0;
-    Wstore[0].im = 0.0;
+    Wstore[0].Re = 1.0;
+    Wstore[0].Im = 0.0;
 
     for(N = 4, pWN = W2n + 1, Skew = Skew2 >> 1; N <= L; N += N, pWN++, Skew2 = Skew, Skew >>= 1)
     {
         //WN = W(1, N) = exp(-2*pi*j/N)
         WN= *pWN; 
         if (complement)
-            WN.im = -WN.im;
+            WN.Im = -WN.Im;
         for(Warray = Wstore; Warray < WstoreEnd; Warray += Skew2)
             complex_mul(Warray + Skew, Warray, &WN);
     }
     return Wstore;
 }
 
-bool fft_step(ShortComplex *x, unsigned int T, unsigned int M, const ShortComplex *Wstore)
+bool fft_step(Complex *x, unsigned int T, unsigned int M, const Complex *Wstore)
 {
     unsigned int L, I, J, MI, MJ, ML, N, Nd2, k, m, Skew, mpNd2;
     unsigned char *Ic = (unsigned char*) &I;
     unsigned char *Jc = (unsigned char*) &J;
-    ShortComplex S;
-    const ShortComplex *Warray;
+    Complex S;
+    const Complex *Warray;
     Complex Temp;
 
     L = 1 << T;    
@@ -174,7 +170,7 @@ bool fft_step(ShortComplex *x, unsigned int T, unsigned int M, const ShortComple
   N: N - number of items in array. Must be odd
   complement: false - normal (direct) transformation, true - reverse transformation
 */
-void fft2(ShortComplex *x, int N, bool complement)
+void fft2(Complex *x, int N, bool complement)
 {
     int r, sL, m, rpsL, mprM, widx, step, step2, h, L, T, M;
 
@@ -182,7 +178,7 @@ void fft2(ShortComplex *x, int N, bool complement)
     if (N & 1)
     {
         N--;
-        x[0].im = x[0].re = 0.0;
+        x[0].Im = x[0].Re = 0.0;
     }
 
     //find L, M and T
@@ -201,7 +197,7 @@ void fft2(ShortComplex *x, int N, bool complement)
     M = N / L;
 
     //find rotation multipliers
-    ShortComplex *Wstore= createWstore(L, complement);
+    Complex *Wstore= createWstore(L, complement);
     
     //make usual FFT
     for (h = 0; h < M; h++) 
@@ -213,17 +209,17 @@ void fft2(ShortComplex *x, int N, bool complement)
     if (M != 1)
     {
         //allocate temporary array
-        ShortComplex *X = new ShortComplex[N];
+        Complex *X = new Complex[N];
         
         Complex one;
-        long double arg;
+        float arg;
         
         //rotation multiplier array allocation
-        ShortComplex *mult = new ShortComplex[N];
-        ShortComplex *multEnd = mult + N;
-        ShortComplex *multPtr;
-        mult[0].re= 1.0;
-        mult[0].im= 0.0;
+        Complex *mult = new Complex[N];
+        Complex *multEnd = mult + N;
+        Complex *multPtr;
+        mult[0].Re= 1.0;
+        mult[0].Im= 0.0;
         
         //step2 is 
         for(step2 = 1; step2 < N; step2 += step2)
@@ -234,13 +230,13 @@ void fft2(ShortComplex *x, int N, bool complement)
         for(step = step2 >> 1; step > 0; step2 = step, step >>= 1)
         {
             arg= (complement ? M_2PI : -M_2PI) * step / N;
-            one.re= cosl(arg);
-            one.im= sinl(arg);
+            one.Re= cosf(arg);
+            one.Im= sinf(arg);
             for(multPtr = mult + step; multPtr < multEnd; multPtr += step2)
                 complex_mul(multPtr, multPtr - step, &one);
         }
         
-        ShortComplex *pX;
+        Complex *pX;
         for(pX = X, rpsL = sL = 0; sL < N; sL += L)
         {
             for(r = 0; r < L; r++, rpsL++, pX++)
@@ -259,7 +255,7 @@ void fft2(ShortComplex *x, int N, bool complement)
             }
         }
         
-        delete  mult;
+        delete[]  mult;
         
         //copy result from temporary array and free it
         for (h = 0; h < N; h++) 
@@ -271,6 +267,6 @@ void fft2(ShortComplex *x, int N, bool complement)
     if (complement)
     {
         for( h= 0; h < N; h++)
-            x[h] /= N;
+            x[h] /= (float) N;
     }
 }
